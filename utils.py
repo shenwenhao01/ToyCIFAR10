@@ -1,18 +1,9 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-import os.path
-import torchvision
-import torchvision.transforms as transforms
+import os
+from models.vgg import *
 
-
-def display_num_param(net):
-    nb_param = 0
-    for param in net.parameters():
-        nb_param += param.numel()
-    print('There are {} ({:.2f} million) parameters in this neural network'.format(
-        nb_param, nb_param/1e6)
-         )
 
 def get_error( scores , labels ):
 
@@ -34,7 +25,6 @@ def show(X):
         print('WRONG TENSOR SIZE')
 
 def show_prob_cifar(p):
-
 
     p=p.data.squeeze().numpy()
 
@@ -84,32 +74,105 @@ def show_prob_cifar(p):
 
     plt.show()
 
-    
-def check_cifar_dataset_exists(path_data='../data/'):
-    flag_train_data = os.path.isfile(path_data + 'cifar/train_data.pt') 
-    flag_train_label = os.path.isfile(path_data + 'cifar/train_label.pt') 
-    flag_test_data = os.path.isfile(path_data + 'cifar/test_data.pt') 
-    flag_test_label = os.path.isfile(path_data + 'cifar/test_label.pt') 
+def build_net(args):
+    net_dict = {
+        'vgg11':vgg11(),
+        'vgg13':vgg13(),
+        'vgg16':vgg16(),
+        'vgg19':vgg19(),
+        'vgg13_bn':vgg13_bn(),
+        'vgg16_bn':vgg16_bn(),
+        'vgg19_bn':vgg19_bn()
+    }
+    net = net_dict[args.model]
+    return net
 
-    if flag_train_data==False or flag_train_label==False or flag_test_data==False or flag_test_label==False:
-        print('CIFAR dataset missing - downloading...')
-        trainset = torchvision.datasets.CIFAR10(root=path_data + 'cifar/temp', train=True,
-                                        download=True, transform=transforms_train)
-        testset = torchvision.datasets.CIFAR10(root=path_data + 'cifar/temp', train=False,
-                                       download=True, transform=transform_test)
- 
-        train_data=torch.Tensor(50000,3,32,32)
-        train_label=torch.LongTensor(50000)
-        for idx , example in enumerate(trainset):
-            train_data[idx]=example[0]
-            train_label[idx]=example[1]
-        torch.save(train_data,path_data + 'cifar/train_data.pt')
-        torch.save(train_label,path_data + 'cifar/train_label.pt') 
-        test_data=torch.Tensor(10000,3,32,32)
-        test_label=torch.LongTensor(10000)
-        for idx , example in enumerate(testset):
-            test_data[idx]=example[0]
-            test_label[idx]=example[1]
-        torch.save(test_data,path_data + 'cifar/test_data.pt')
-        torch.save(test_label,path_data + 'cifar/test_label.pt')
-    return path_data
+def load_dataset(args):
+    import torchvision
+    import torchvision.transforms as transforms
+    transform_train = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        # compute the mean and std for each channel separately!
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    trainset = torchvision.datasets.CIFAR10(root=args.root, train=True, download = True, transform=transform_train)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True)
+
+    testset = torchvision.datasets.CIFAR10(root=args.root, train=False, download = True, transform=transform_test)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False)
+
+    return trainloader, testloader
+
+def eval_on_test_set(testloader, device, net):
+
+    running_error=0
+
+    for num_batches, (inputs, labels) in enumerate(testloader):
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+
+        scores = net( inputs ) 
+
+        error =  get_error( scores , labels)
+
+        running_error += error.item()
+
+    total_error = running_error/(num_batches+1)
+    accuracy = (1 - total_error) * 100
+    print( 'accuracy on test set =', accuracy ,'percent')
+    print(" ")
+    return accuracy
+
+
+def load_model(net,
+               optim,
+               scheduler,
+               model_dir,
+               resume=True):
+    if not resume:
+        os.system('rm -rf {}'.format(model_dir))
+    if not os.path.exists(model_dir):
+        return 0
+
+    pths = [
+        int(pth.split('.')[0]) for pth in os.listdir(model_dir)
+        if pth != 'latest.pth' and pth != 'best.pth'
+    ]
+    if len(pths) == 0 and 'latest.pth' not in os.listdir(model_dir):
+        return 0
+    if 'latest.pth' in os.listdir(model_dir):
+        pth = 'latest'
+    else:
+        pth = max(pths)
+    
+    print('load model: {}'.format(os.path.join(model_dir, '{}.pth'.format(pth))))
+    pretrained_model = torch.load( os.path.join(model_dir, '{}.pth'.format(pth)), 'cpu' )
+    net.load_state_dict(pretrained_model['net'])
+    optim.load_state_dict(pretrained_model['optim'])
+    scheduler.load_state_dict(pretrained_model['scheduler'])
+    return pretrained_model['epoch'] + 1
+
+
+def save_model(net, optim, scheduler, model_dir, epoch, last=False, best=False):
+    os.system('mkdir -p {}'.format(model_dir))
+    model = {
+        'net': net.state_dict(),
+        'optim': optim.state_dict(),
+        'scheduler': scheduler.state_dict(),
+        'epoch': epoch
+    }
+    if last:
+        torch.save(model, os.path.join(model_dir, 'latest.pth'))
+    elif best:
+        torch.save(model, os.path.join(model_dir, 'best.pth'))
+    else:
+        torch.save(model, os.path.join(model_dir, '{}.pth'.format(epoch)))
+    return 0
