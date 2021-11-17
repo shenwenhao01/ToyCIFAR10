@@ -1,7 +1,38 @@
 # ToyCIFAR10
 
+## Installation
 
-## Hyperparameter
+```bash
+conda create -n toycifar python=3.7
+conda activate toycifar
+
+# make sure that the pytorch cuda is consistent with the system cuda
+# e.g., if your system cuda is 10.0, install torch 1.4 built from cuda 10.0
+pip install torch==1.4.0+cu100 -f https://download.pytorch.org/whl/torch_stable.html
+
+pip install -r requirements.txt
+```
+
+## Quick Start
+
+1. Train
+
+```bash
+# start training a new network(vgg11 here)
+python main.py --model vgg11
+# resume training with pretrained model(vgg11 here)
+python main.py --resume --model vgg11
+```
+
+2. Test
+
+```bash
+# test best pretrained model(vgg11 here)
+python main.py --type test --model vgg11
+```
+
+## Training Details
+
 ### Learning Rate
 | Model  | Learning Rate |
 | :----: | :------: |

@@ -6,7 +6,7 @@ import argparse
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--root', '-r', type=str, default='./data', help='data root')
+parser.add_argument('--root', '-r', type=str, default='./data', help='cifar data root')
 parser.add_argument('--resume', action='store_true', help='whether use pretrained model')
 parser.add_argument('--type', type=str, default='train')
 parser.add_argument('--lr', type=float, default=0.05)
@@ -68,6 +68,20 @@ def run_train():
             utils.save_model(net, optimizer, scheduler, output_dir, epoch)
 
         scheduler.step()
+
+def run_test():
+    net = utils.build_net(args)
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    net = net.to(device)
+    _, testloader = utils.load_dataset(args)
+    optimizer = torch.optim.SGD( net.parameters() , lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epoch)
+    #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9, last_epoch=-1)
+    output_dir = os.path.join('outputs',args.model)
+    print(colored("Test pretrained model in: {}".format(output_dir), "yellow"))
+    
+    _ = utils.load_model(net, optimizer, scheduler, output_dir, best=True)
+    utils.eval_on_test_set(testloader, device, net)
 
 if __name__ == '__main__':
     globals()['run_' + args.type]()

@@ -136,7 +136,8 @@ def load_model(net,
                optim,
                scheduler,
                model_dir,
-               resume=True):
+               resume=True,
+               best=False):
     if not resume:
         os.system('rm -rf {}'.format(model_dir))
     if not os.path.exists(model_dir):
@@ -148,8 +149,10 @@ def load_model(net,
     ]
     if len(pths) == 0 and 'latest.pth' not in os.listdir(model_dir):
         return 0
-    if 'latest.pth' in os.listdir(model_dir):
+    if 'latest.pth' in os.listdir(model_dir) and best == False:
         pth = 'latest'
+    elif(best == True):
+        pth = 'best'
     else:
         pth = max(pths)
     
