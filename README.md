@@ -1,5 +1,6 @@
 # ToyCIFAR10
 
+<<<<<<< HEAD
 ## Installation
 
 ```bash
@@ -33,6 +34,10 @@ python main.py --type test --model vgg11
 
 ## Training Details
 
+=======
+
+## Hyperparameter
+>>>>>>> 1c5f465866a3060b36ea5f8ccb6af646682ffb35
 ### Learning Rate
 | Model  | Learning Rate |
 | :----: | :------: |
