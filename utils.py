@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import os
 from models.vgg import *
 
+label = ('airplane', 'automobile', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship','Truck' )
 
 def get_error( scores , labels ):
 
@@ -11,8 +12,15 @@ def get_error( scores , labels ):
     predicted_labels = scores.argmax(dim=1)
     indicator = (predicted_labels == labels)
     num_matches=indicator.sum()
-    
-    return 1-num_matches.float()/bs    
+    class_num = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0}
+    class_accuracy = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0}
+    for l in range(10):
+        for i in range(bs):
+            if labels[i] == l:
+                class_num[l] += 1
+                if labels[i] == predicted_labels[i]:
+                    class_accuracy[l] += 1
+    return 1-num_matches.float()/bs, class_accuracy, class_num 
 
 def show(X):
     if X.dim() == 3 and X.size(0) == 3:
@@ -29,7 +37,6 @@ def show_prob_cifar(p):
     p=p.data.squeeze().numpy()
 
     ft=15
-    label = ('airplane', 'automobile', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship','Truck' )
     #p=p.data.squeeze().numpy()
     y_pos = np.arange(len(p))*1.2
     target=2
@@ -49,16 +56,11 @@ def show_prob_cifar(p):
     # y label
     ax.set_yticks(y_pos)
     ax.set_yticklabels(label, fontsize=ft)
-    ax.invert_yaxis()  
-    #ax.set_xlabel('Performance')
-    #ax.set_title('How fast do you want to go today?')
+    ax.invert_yaxis()
 
     # x label
     ax.set_xticklabels([])
     ax.set_xticks([])
-    #x_pos=np.array([0, 0.25 , 0.5 , 0.75 , 1])
-    #ax.set_xticks(x_pos)
-    #ax.set_xticklabels( [0, 0.25 , 0.5 , 0.75 , 1] , fontsize=15)
 
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
@@ -114,6 +116,8 @@ def load_dataset(args):
 def eval_on_test_set(testloader, device, net):
 
     running_error=0
+    class_accu = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0}
+    class_total = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0}
 
     for num_batches, (inputs, labels) in enumerate(testloader):
         inputs = inputs.to(device)
@@ -121,14 +125,31 @@ def eval_on_test_set(testloader, device, net):
 
         scores = net( inputs ) 
 
-        error =  get_error( scores , labels)
-
+        error, class_accuracy, class_num =  get_error( scores , labels)
+        for k , v in class_accuracy.items() :
+            if k in class_accu . keys ( ) :
+                class_accu [ k ] += v
+            else :
+                class_accu [ k ] = v
+        for k , v in class_num.items() :
+            if k in class_total.keys ( ) :
+                class_total [k] += v
+            else :
+                class_total [k] = v
         running_error += error.item()
 
     total_error = running_error/(num_batches+1)
     accuracy = (1 - total_error) * 100
     print( 'accuracy on test set =', accuracy ,'percent')
     print(" ")
+
+    for i in range(10):
+        if class_total[i] > 0:
+            print('Test Accuracy of %10s: %2d%% (%2d/%2d)' % ( label[i], 100 * class_accu[i] / class_total[i],
+                np.sum(class_accu[i]), np.sum(class_total[i])))
+        else:
+            print('Test Accuracy of %5s: N/A (no training examples)' % (label[i]))
+
     return accuracy
 
 

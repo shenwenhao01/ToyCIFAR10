@@ -46,7 +46,7 @@ def run_train():
             
             running_loss += loss.detach().item()
             
-            error = utils.get_error( scores.detach() , labels)
+            error, _, _ = utils.get_error( scores.detach() , labels)
             running_error += error.item()      
 
 
@@ -80,8 +80,12 @@ def run_test():
     output_dir = os.path.join('outputs',args.model)
     print(colored("Test pretrained model in: {}".format(output_dir), "yellow"))
     
-    _ = utils.load_model(net, optimizer, scheduler, output_dir, best=True)
-    utils.eval_on_test_set(testloader, device, net)
+    flag = utils.load_model(net, optimizer, scheduler, output_dir, best=True)
+    if flag:
+        utils.eval_on_test_set(testloader, device, net)
+    else:
+        print(colored("Pretrained model doesn't exist!", "red"))
+
 
 if __name__ == '__main__':
     globals()['run_' + args.type]()
