@@ -2,7 +2,9 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from test_noise import *
 from models.vgg import *
+from models.mobilenetv2 import *
 
 label = ('airplane', 'automobile', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship','Truck' )
 
@@ -84,14 +86,52 @@ def build_net(args):
         'vgg19':vgg19(),
         'vgg13_bn':vgg13_bn(),
         'vgg16_bn':vgg16_bn(),
-        'vgg19_bn':vgg19_bn()
+        'vgg19_bn':vgg19_bn(),
+        'mobilenetv2':mobilenetv2()
     }
     net = net_dict[args.model]
     return net
 
+def add_noise(path_data):
+    raise NotImplementedError
+    
+    import torchvision
+    import torchvision.transforms as transforms
+    import cv2
+    trainset = torchvision.datasets.CIFAR10(root=path_data, train=True,
+                                        download=True, transform=transforms.ToTensor())
+    testset = torchvision.datasets.CIFAR10(root=path_data, train=False,
+                                    download=True, transform=transforms.ToTensor())  
+    train_data=torch.Tensor(50000,3,32,32)
+    train_label=torch.LongTensor(50000)
+    for idx , example in enumerate(trainset):
+        train_data[idx]= example[0]
+        train_label[idx]=example[1]
+    #torch.save(train_data,path_data + 'train_data.pt')
+    #torch.save(train_label,path_data + 'train_label.pt') 
+
+    test_data=torch.Tensor(10000,3,32,32)
+    test_label=torch.LongTensor(10000)
+    for idx , example in enumerate(testset):
+        test_data[idx]=Noise(example[0], 'random').make_noise()
+        test_label[idx]=example[1]
+    #torch.save(test_data[0],path_data + 'test_data[0].pt')
+    #torch.save(test_label,path_data + 'test_label.pt')
+
+
 def load_dataset(args):
     import torchvision
     import torchvision.transforms as transforms
+    add_noise(args.root)
+    '''
+    test_data = torchvision.datasets.CIFAR10(root=args.root, train=False, download = True)
+    rgb_mean = []
+    rgb_std = []
+    for i in range(test_data.size(1) + 1):
+        rgb_mean.append( test_data[:,i].mean().item() )
+        rgb_std.append( test_data.std() )
+    print(rgb_mean, rgb_std)
+    '''
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -113,7 +153,7 @@ def load_dataset(args):
 
     return trainloader, testloader
 
-def eval_on_test_set(testloader, device, net):
+def eval_on_test_set(testloader, device, net, split):
 
     running_error=0
     class_accu = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0}
@@ -143,12 +183,13 @@ def eval_on_test_set(testloader, device, net):
     print( 'accuracy on test set =', accuracy ,'percent')
     print(" ")
 
-    for i in range(10):
-        if class_total[i] > 0:
-            print('Test Accuracy of %10s: %2d%% (%2d/%2d)' % ( label[i], 100 * class_accu[i] / class_total[i],
-                np.sum(class_accu[i]), np.sum(class_total[i])))
-        else:
-            print('Test Accuracy of %5s: N/A (no training examples)' % (label[i]))
+    if split == 'test':
+        for i in range(10):
+            if class_total[i] > 0:
+                print('Test Accuracy of %10s: %2d%% (%2d/%2d)' % ( label[i], 100 * class_accu[i] / class_total[i],
+                    np.sum(class_accu[i]), np.sum(class_total[i])))
+            else:
+                print('Test Accuracy of %5s: N/A (no training examples)' % (label[i]))
 
     return accuracy
 

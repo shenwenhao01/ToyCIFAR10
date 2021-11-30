@@ -58,8 +58,8 @@ def run_train():
 
         print('epoch=',epoch, '\t time=', elapsed,'min','\t lr=', optimizer.state_dict()['param_groups'][0]['lr'],\
         '\t loss=', total_loss , '\t error=', total_error*100 ,'percent')
-        accuracy = utils.eval_on_test_set(testloader, device, net)
-        if accuracy >= best_accuracy:
+        accuracy = utils.eval_on_test_set(testloader, device, net, split='train')
+        if accuracy > best_accuracy:
             utils.save_model(net, optimizer, scheduler, output_dir, epoch, best=True)
 
         utils.save_model(net, optimizer, scheduler, output_dir, epoch, last=True)
@@ -82,7 +82,7 @@ def run_test():
     
     flag = utils.load_model(net, optimizer, scheduler, output_dir, best=True)
     if flag:
-        utils.eval_on_test_set(testloader, device, net)
+        utils.eval_on_test_set(testloader, device, net, split='test')
     else:
         print(colored("Pretrained model doesn't exist!", "red"))
 
