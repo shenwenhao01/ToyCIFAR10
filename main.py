@@ -9,6 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--root', '-r', type=str, default='./data', help='cifar data root')
 parser.add_argument('--resume', action='store_true', help='whether use pretrained model')
 parser.add_argument('--type', type=str, default='train')
+parser.add_argument('--noise', action='store_true', help='add noise to test ')
 parser.add_argument('--lr', type=float, default=0.05)
 parser.add_argument('--model', '-m', type=str, default='vgg11', help='which model')
 parser.add_argument('--epoch', '-e', type=int, default=200, help = 'how many epoch')
@@ -61,10 +62,11 @@ def run_train():
         accuracy = utils.eval_on_test_set(testloader, device, net, split='train')
         if accuracy > best_accuracy:
             utils.save_model(net, optimizer, scheduler, output_dir, epoch, best=True)
+            best_accuracy = accuracy
 
         utils.save_model(net, optimizer, scheduler, output_dir, epoch, last=True)
         
-        if (epoch + 1) % 5 == 0:
+        if (epoch + 1) % 50 == 0:
             utils.save_model(net, optimizer, scheduler, output_dir, epoch)
 
         scheduler.step()
@@ -80,9 +82,10 @@ def run_test():
     output_dir = os.path.join('outputs',args.model)
     print(colored("Test pretrained model in: {}".format(output_dir), "yellow"))
     
-    flag = utils.load_model(net, optimizer, scheduler, output_dir, best=True)
-    if flag:
+    preepoch = utils.load_model(net, optimizer, scheduler, output_dir, best=True)
+    if preepoch:
         utils.eval_on_test_set(testloader, device, net, split='test')
+        print("This model has been trained for: {} epochs".format(preepoch-1))
     else:
         print(colored("Pretrained model doesn't exist!", "red"))
 

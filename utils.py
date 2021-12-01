@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from test_noise import *
+from dataset import *
 from models.vgg import *
 from models.mobilenetv2 import *
 
@@ -91,66 +91,24 @@ def build_net(args):
     }
     net = net_dict[args.model]
     return net
-
-def add_noise(path_data):
-    raise NotImplementedError
     
-    import torchvision
-    import torchvision.transforms as transforms
-    import cv2
-    trainset = torchvision.datasets.CIFAR10(root=path_data, train=True,
-                                        download=True, transform=transforms.ToTensor())
-    testset = torchvision.datasets.CIFAR10(root=path_data, train=False,
-                                    download=True, transform=transforms.ToTensor())  
-    train_data=torch.Tensor(50000,3,32,32)
-    train_label=torch.LongTensor(50000)
-    for idx , example in enumerate(trainset):
-        train_data[idx]= example[0]
-        train_label[idx]=example[1]
-    #torch.save(train_data,path_data + 'train_data.pt')
-    #torch.save(train_label,path_data + 'train_label.pt') 
-
-    test_data=torch.Tensor(10000,3,32,32)
-    test_label=torch.LongTensor(10000)
-    for idx , example in enumerate(testset):
-        test_data[idx]=Noise(example[0], 'random').make_noise()
-        test_label[idx]=example[1]
-    #torch.save(test_data[0],path_data + 'test_data[0].pt')
-    #torch.save(test_label,path_data + 'test_label.pt')
-
 
 def load_dataset(args):
-    import torchvision
-    import torchvision.transforms as transforms
-    add_noise(args.root)
-    '''
-    test_data = torchvision.datasets.CIFAR10(root=args.root, train=False, download = True)
-    rgb_mean = []
-    rgb_std = []
-    for i in range(test_data.size(1) + 1):
-        rgb_mean.append( test_data[:,i].mean().item() )
-        rgb_std.append( test_data.std() )
-    print(rgb_mean, rgb_std)
-    '''
-    transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        # compute the mean and std for each channel separately!
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
-
-    transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
-
-    trainset = torchvision.datasets.CIFAR10(root=args.root, train=True, download = True, transform=transform_train)
+    
+    trainset = ToyCifar10(root=args.root, train=True)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True)
 
-    testset = torchvision.datasets.CIFAR10(root=args.root, train=False, download = True, transform=transform_test)
+    testset = ToyCifar10(root=args.root, train=False, noise=None)
     testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False)
-
+    '''
+    path_data = os.path.join(args.root, 'cifar','temp')
+    trainset = torchvision.datasets.CIFAR10(root=path_data, train=True,
+                                        download=True, transform=transforms.ToTensor())
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True)
+    testset = torchvision.datasets.CIFAR10(root=path_data, train=False,
+                                    download=True, transform=transforms.ToTensor()) 
+    testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False)
+    '''
     return trainloader, testloader
 
 def eval_on_test_set(testloader, device, net, split):

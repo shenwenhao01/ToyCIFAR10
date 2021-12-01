@@ -11,6 +11,7 @@ conda activate toycifar
 pip install torch==1.4.0+cu100 -f https://download.pytorch.org/whl/torch_stable.html
 
 pip install -r requirements.txt
+export PYTHONPATH = /path/to/ToyCIFAR10/
 ```
 
 ## Quick Start
@@ -19,6 +20,7 @@ pip install -r requirements.txt
 
 ```bash
 # start training a new network(vgg11 here)
+
 python main.py --model vgg11
 # resume training with pretrained model(vgg11 here)
 python main.py --resume --model vgg11
