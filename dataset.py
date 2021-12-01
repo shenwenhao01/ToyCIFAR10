@@ -1,10 +1,10 @@
 import numpy as np
-import cv2
 import os
+import random
 import torch
 import torchvision
 import torchvision.transforms as transforms
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 
 class Noise:
     def __init__(self, img, noise=None):
