@@ -8,7 +8,7 @@ from models.mobilenetv2 import *
 
 label = ('airplane', 'automobile', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship','Truck' )
 
-def get_error( scores , labels ):
+def get_error( scores , labels , split):
 
     bs=scores.size(0)
     predicted_labels = scores.argmax(dim=1)
@@ -16,12 +16,13 @@ def get_error( scores , labels ):
     num_matches=indicator.sum()
     class_num = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0}
     class_accuracy = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0}
-    for l in range(10):
-        for i in range(bs):
-            if labels[i] == l:
-                class_num[l] += 1
-                if labels[i] == predicted_labels[i]:
-                    class_accuracy[l] += 1
+    if split == 'test':
+        for l in range(10):
+            for i in range(bs):
+                if labels[i] == l:
+                    class_num[l] += 1
+                    if labels[i] == predicted_labels[i]:
+                        class_accuracy[l] += 1
     return 1-num_matches.float()/bs, class_accuracy, class_num 
 
 def show(X):
@@ -94,12 +95,15 @@ def build_net(args):
     
 
 def load_dataset(args):
-    
-    trainset = ToyCifar10(root=args.root, train=True)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True)
-
-    testset = ToyCifar10(root=args.root, train=False, noise=None)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False)
+    if args.type == "train":
+        testset = ToyCifar10(root=args.root, train=False, noise=None)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False)
+        trainset = ToyCifar10(root=args.root, train=True, noise=args.noise)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True)
+    else:
+        testset = ToyCifar10(root=args.root, train=False, noise=args.noise)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False)
+        trainloader = None
     '''
     path_data = os.path.join(args.root, 'cifar','temp')
     trainset = torchvision.datasets.CIFAR10(root=path_data, train=True,
@@ -123,17 +127,18 @@ def eval_on_test_set(testloader, device, net, split):
 
         scores = net( inputs ) 
 
-        error, class_accuracy, class_num =  get_error( scores , labels)
-        for k , v in class_accuracy.items() :
-            if k in class_accu . keys ( ) :
-                class_accu [ k ] += v
-            else :
-                class_accu [ k ] = v
-        for k , v in class_num.items() :
-            if k in class_total.keys ( ) :
-                class_total [k] += v
-            else :
-                class_total [k] = v
+        error, class_accuracy, class_num =  get_error( scores , labels, split)
+        if split == 'test':
+            for k , v in class_accuracy.items() :
+                if k in class_accu . keys ( ) :
+                    class_accu [ k ] += v
+                else :
+                    class_accu [ k ] = v
+            for k , v in class_num.items() :
+                if k in class_total.keys ( ) :
+                    class_total [k] += v
+                else :
+                    class_total [k] = v
         running_error += error.item()
 
     total_error = running_error/(num_batches+1)

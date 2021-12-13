@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--root', '-r', type=str, default='./data', help='cifar data root')
 parser.add_argument('--resume', action='store_true', help='whether use pretrained model')
 parser.add_argument('--type', type=str, default='train')
-parser.add_argument('--noise', action='store_true', help='add noise to test ')
+parser.add_argument('--noise', required=False, choices=['random','sp','gauss'],help='add noise to test set')
 parser.add_argument('--lr', type=float, default=0.05)
 parser.add_argument('--model', '-m', type=str, default='vgg11', help='which model')
 parser.add_argument('--epoch', '-e', type=int, default=200, help = 'how many epoch')
@@ -47,7 +47,7 @@ def run_train():
             
             running_loss += loss.detach().item()
             
-            error, _, _ = utils.get_error( scores.detach() , labels)
+            error, _, _ = utils.get_error( scores.detach() , labels, split='train')
             running_error += error.item()      
 
 

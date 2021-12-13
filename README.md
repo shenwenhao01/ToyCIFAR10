@@ -24,6 +24,8 @@ export PYTHONPATH = /path/to/ToyCIFAR10/
 python main.py --model vgg11
 # resume training with pretrained model(vgg11 here)
 python main.py --resume --model vgg11
+# train with data augmentation
+python main.py --noise random --type train --model vgg11
 ```
 
 2. Test
@@ -31,6 +33,8 @@ python main.py --resume --model vgg11
 ```bash
 # test best pretrained model(vgg11 here)
 python main.py --type test --model vgg11
+# test with noise (random/gauss/sp)
+python main.py --type test --model vgg11 --noise gauss
 ```
 
 ## Training Details
