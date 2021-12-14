@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--root', '-r', type=str, default='./data', help='cifar data root')
 parser.add_argument('--resume', action='store_true', help='whether use pretrained model')
 parser.add_argument('--type', type=str, default='train')
-parser.add_argument('--noise', required=False, choices=['random','sp','gauss'],help='add noise to test set')
+parser.add_argument('--noise', required=False, default=None, choices=['random','sp','gauss'],help='add noise to test set')
 parser.add_argument('--lr', type=float, default=0.05)
 parser.add_argument('--model', '-m', type=str, default='vgg11', help='which model')
 parser.add_argument('--epoch', '-e', type=int, default=200, help = 'how many epoch')
@@ -17,6 +17,7 @@ args = parser.parse_args()
 
 def run_train():
     net = utils.build_net(args)
+    print(args)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     net = net.to(device)
     trainloader, testloader = utils.load_dataset(args)
@@ -66,10 +67,11 @@ def run_train():
 
         utils.save_model(net, optimizer, scheduler, output_dir, epoch, last=True)
         
-        if (epoch + 1) % 50 == 0:
+        if (epoch + 1) % 100 == 0:
             utils.save_model(net, optimizer, scheduler, output_dir, epoch)
 
         scheduler.step()
+ 
 
 def run_test():
     net = utils.build_net(args)

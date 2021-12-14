@@ -42,7 +42,7 @@ python main.py --type test --model vgg11 --noise gauss
 ### Learning Rate
 | Model  | Learning Rate |
 | :----: | :------: |
-| VGG 11 |  0.1  |
+| VGG 11 |  0.05  |
 | VGG 19 |  0.05  |
 
 ## Accuracy
