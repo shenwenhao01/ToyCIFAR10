@@ -94,7 +94,6 @@ class ToyCifar10(Dataset):
             self.label = torch.load(path_data+'/train_label.pt')
             if self.noise is not None:
                 for i in range(self.data.size(0)):
-
                     img = Noise(self.data[i], noise = self.noise).make_noise()
                     self.data[i] = torch.from_numpy( np.transpose(img, (2, 0, 1)) )
             mean = [self.data[:,0].mean(), self.data[:,1].mean(), self.data[:,2].mean()]
