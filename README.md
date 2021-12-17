@@ -40,7 +40,7 @@ python main.py --type test --model vgg11 --noise gauss
 ## Training Details
 
 ### Learning Rate
-Initial learning rate = 0.05
+Initial learning rate = 0.05, lr=0.01 is also recommended here.
 Cosineannealing strategy, T_max = total epochs.
 
 ## Accuracy
