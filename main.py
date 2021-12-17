@@ -10,18 +10,12 @@ parser.add_argument('--root', '-r', type=str, default='./data', help='cifar data
 parser.add_argument('--resume', action='store_true', help='whether use pretrained model')
 parser.add_argument('--type', type=str, default='train')
 #parser.add_argument('--exp', type=str, default='default')
-parser.add_argument('--noise', required=False, default=None, choices=['random','sp','gauss'],help='add noise to test set')
+parser.add_argument('--noise', required=False, default=None, choices=['random','sp','gauss','bright','contrast'],help='add noise to test set')
 parser.add_argument('--lr', type=float, default=0.05)
 parser.add_argument('--model', '-m', type=str, default='vgg11', help='which model')
 parser.add_argument('--epoch', '-e', type=int, default=200, help = 'how many epoch')
 args = parser.parse_args()
 
-if args.noise:
-    output_dir = os.path.join('outputs',args.model, args.noise)
-elif args.lr == 0.05:
-    output_dir = os.path.join('outputs',args.model, 'default')
-else:
-    output_dir = os.path.join('outputs',args.model, 'lr_exp')
 
 def run_train():
     net = utils.build_net(args)
@@ -33,6 +27,13 @@ def run_train():
     optimizer = torch.optim.SGD( net.parameters() , lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epoch)
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9, last_epoch=-1)
+    if args.noise:
+        output_dir = os.path.join('outputs',args.model, args.noise)
+    elif args.lr == 0.05:
+        output_dir = os.path.join('outputs',args.model, 'default')
+    else:
+        output_dir = os.path.join('outputs',args.model, 'lr_exp')
+    #output_dir = os.path.join('outputs', args.model, 'test')
     print(colored("The trained model will be saved in: {}".format(output_dir), "yellow"))
     
     begin_epoch = utils.load_model(net, optimizer, scheduler, output_dir, args.resume)
@@ -88,6 +89,7 @@ def run_test():
     optimizer = torch.optim.SGD( net.parameters() , lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epoch)
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9, last_epoch=-1)
+    output_dir = os.path.join('outputs', args.model, 'default')
     print(colored("Test pretrained model in: {}".format(output_dir), "yellow"))
     
     preepoch = utils.load_model(net, optimizer, scheduler, output_dir, best=True)

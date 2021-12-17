@@ -9,7 +9,6 @@ from models.mobilenetv2 import *
 label = ('airplane', 'automobile', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship','Truck' )
 
 def get_error( scores , labels , split):
-
     bs=scores.size(0)
     predicted_labels = scores.argmax(dim=1)
     indicator = (predicted_labels == labels)
@@ -24,16 +23,6 @@ def get_error( scores , labels , split):
                     if labels[i] == predicted_labels[i]:
                         class_accuracy[l] += 1
     return 1-num_matches.float()/bs, class_accuracy, class_num 
-
-def show(X):
-    if X.dim() == 3 and X.size(0) == 3:
-        plt.imshow( np.transpose(  X.numpy() , (1, 2, 0))  )
-        plt.show()
-    elif X.dim() == 2:
-        plt.imshow(   X.numpy() , cmap='gray'  )
-        plt.show()
-    else:
-        print('WRONG TENSOR SIZE')
 
 
 def build_net(args):
@@ -71,6 +60,7 @@ def load_dataset(args):
     testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False)
     '''
     return trainloader, testloader
+
 
 def eval_on_test_set(testloader, device, net, split):
 

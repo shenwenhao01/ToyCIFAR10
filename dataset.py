@@ -20,10 +20,20 @@ class Noise:
             return self.sp_noise()
         elif self.noise == 'gauss':
             return self.gauss_noise()
+        elif self.noise == 'bright':
+            return self.bright_noise()
+        elif self.noise == 'contrast':
+            return self.contrast_noise()
         else:
             return self.img
 
-    def random_noise(self, noise_num=100):
+    def bright_noise(self, offset=0.2):
+        return np.float32(np.clip((cv2.add(1.*self.img, offset)), 0., 1.) )
+
+    def contrast_noise(self, offset=0.2):
+        return np.float32(np.clip((cv2.add((1.+offset)*self.img, 0)), 0., 1.) )
+
+    def random_noise(self, noise_num=200):
         '''
         添加随机噪点（实际上就是随机在图像上将像素点的灰度值变为255即白色）
         :param image: 需要加噪的图片
@@ -39,7 +49,7 @@ class Noise:
             img_noise[x, y, :] = 1.
         return img_noise
 
-    def sp_noise(self, prob=0.01):
+    def sp_noise(self, prob=0.1):
         '''
         添加椒盐噪声
         image:原始图片
@@ -59,7 +69,7 @@ class Noise:
                     img_noise[i][j] = image[i][j]#其他情况像素点不变
         return img_noise
 
-    def gauss_noise(self, mean=0, var=0.01):
+    def gauss_noise(self, mean=0, var=0.02):
         ''' 
             添加高斯噪声
             image:原始图像
@@ -87,6 +97,7 @@ class ToyCifar10(Dataset):
         self.root = root
         self.noise = noise
 
+        # check if the dataset has been downloaded and processed
         path_data = self.check_cifar_dataset_exists()
 
         if self.train == True:
@@ -102,7 +113,7 @@ class ToyCifar10(Dataset):
             self.transform = transforms.Compose([
                 transforms.RandomCrop(32, padding=4),
                 transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
+                transforms.ToTensor(),          # Whitening and to tensor
                 transforms.Normalize(mean, std),
             ])
         else:
