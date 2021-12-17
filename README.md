@@ -29,7 +29,7 @@ python main.py --noise random --type train --model vgg11
 ```
 
 2. Test
-
+VGG-13 pretrained model is in `outputs/vgg13/default`
 ```bash
 # test best pretrained model(vgg11 here)
 python main.py --type test --model vgg11
