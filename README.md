@@ -28,8 +28,8 @@ python main.py --resume --model vgg11
 python main.py --noise random --type train --model vgg11
 ```
 
+VGG-13 pretrained model is saved in `outputs/vgg13/default`
 2. Test
-VGG-13 pretrained model is in `outputs/vgg13/default`
 ```bash
 # test best pretrained model(vgg11 here)
 python main.py --type test --model vgg11
