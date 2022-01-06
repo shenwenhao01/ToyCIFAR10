@@ -1,6 +1,6 @@
 # ToyCIFAR10
 
-The report for this project is in `doc/report`.
+The report is in `doc/`.
 
 ## Installation
 
